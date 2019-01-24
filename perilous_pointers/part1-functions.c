@@ -6,9 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-/**
- * Checks to see if the input parameter is a passing grade and prints out
+                                                                                                                                                                                                                                                 /* Checks to see if the input parameter is a passing grade and prints out
  * if the grade is passing using the provided format specifiers. Note that
  * 'grade' is a char pointer pointing to the beginning of a C string. A grade
  * is considered passing iff the numeric interpretation (defined by strtof) is
@@ -22,8 +20,10 @@
  *     The grade to check.
  */
 void one(const char *grade) {
-    if (grade > 70)
-        printf("%f passed!\n", grade);
+    char *end;
+    float g = strtof(grade, &end);
+    if (g > 70)
+        printf("%s passed!\n", grade);
     else
         printf("%s not passed!\n", grade);
 }
@@ -34,7 +34,7 @@ void one(const char *grade) {
  */
 void two() {
     int x = 4;
-    int *p = x;
+    int *p = &x;
 
     printf("The value of p is: %d\n", *p);
 }
@@ -51,7 +51,7 @@ void two() {
  *     Second input parameter.
  */
 void three(const int *x, const int *y) {
-    if (x == y)
+    if (*x == *y)
         printf("x and y are equal.\n");
     else
         printf("x and y are different.\n");
@@ -70,7 +70,8 @@ void three(const int *x, const int *y) {
  *     contains the value of the input parameter.
  */
 float *four(const int *x) {
-    float *p = *x;
+    float *p = malloc(sizeof(float));
+    *p = *x;
     return p;
 }
 
@@ -83,7 +84,7 @@ float *four(const int *x) {
  *
  */
 void five(const char *a) {
-    if (a >= 'A' && a <= 'z')
+    if (*a >= 'A' && *a <= 'z')
         printf("a is a letter.\n");
     else
         printf("a is not a letter.\n");
@@ -95,7 +96,8 @@ void five(const char *a) {
  * prints the concatenated string.
  */
 void six(const char *str) {
-    char *s = "Hello ";
+    char s[7+strlen(str)];
+    strcpy(s, "Hello ");
     strcat(s, str);
     printf("%s\n", s);
 }
@@ -104,14 +106,14 @@ void six(const char *str) {
  * Creates an array of values containing the values {0.0, 0.1, ..., 0.9}.
  */
 void seven() {
-    float *values;
+    float values[10];
 
     int i, n = 10;
     for (i = 0; i < n; i++)
         values[i] = (float)i / n;
 
     for (i = 0; i < n; i++)
-        printf("%f ", values[i]);
+        printf("%0.1f ", values[i]);
     printf("\n");
 }
 
@@ -119,10 +121,9 @@ void seven() {
  * Creates a 2D array of values and prints out the values on the diagonal.
  */
 void eight(int a) {
-    int **values;
+    int values[10][10];
 
     int i, j;
-    values = malloc(10 * sizeof(int));
     for (i = 0; i < 10; i++)
         for (j = 0; j < 10; j++)
             values[i][j] = i * j * a;
@@ -143,19 +144,18 @@ void eight(int a) {
  *     Input parameter, used to determine which string is printed.
  */
 void nine(const char *s) {
-    switch (s) {
-    case "blue":
+    if (!strcmp(s, "blue")) {
         printf("Orange and BLUE!\n");
-        break;
-
-    case "orange":
-        printf("ORANGE and blue!\n");
-        break;
-
-    default:
-        printf("orange and blue!\n");
-        break;
+        return;
     }
+
+    if (!strcmp(s, "orange")) {
+        printf("ORANGE and blue!\n");
+        return;
+    }
+
+    printf("orange and blue!\n");
+
 }
 
 /**
