@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
                                                                                                                                                                                                                                                  /* Checks to see if the input parameter is a passing grade and prints out
  * if the grade is passing using the provided format specifiers. Note that
  * 'grade' is a char pointer pointing to the beginning of a C string. A grade
@@ -23,7 +24,7 @@ void one(const char *grade) {
     char *end;
     float g = strtof(grade, &end);
     if (g > 70)
-        printf("%s passed!\n", grade);
+        printf("%f passed!\n", g);
     else
         printf("%s not passed!\n", grade);
 }
@@ -84,7 +85,7 @@ float *four(const int *x) {
  *
  */
 void five(const char *a) {
-    if (*a >= 'A' && *a <= 'z')
+    if ((*a >= 'A' && *a <= 'Z') || (*a >= 'a' && *a <= 'z'))
         printf("a is a letter.\n");
     else
         printf("a is not a letter.\n");
@@ -113,7 +114,7 @@ void seven() {
         values[i] = (float)i / n;
 
     for (i = 0; i < n; i++)
-        printf("%0.1f ", values[i]);
+        printf("%f ", values[i]);
     printf("\n");
 }
 
@@ -165,7 +166,7 @@ void nine(const char *s) {
  *     The diameter of the circle.
  */
 void ten(const int d) {
-    printf("The radius of the circle is: %f.\n", d / 2);
+    printf("The radius of the circle is: %f.\n", (float) d / 2);
 }
 
 /**
@@ -193,6 +194,18 @@ void ten(const int d) {
  */
 long int clear_bits(long int value, long int flag) {
     // TODO clear_bits
+    int bit = 0;
+    long int result = 0x00;
+    while(bit < 8) {
+        // stuff
+	int current_v = (value >> bit) & 0x01;
+	int current_f = (flag >> bit) & 0x01;
+	if (current_v && !current_f) {
+	    result = result | (long int) pow(2, bit);
+	}
+	bit++;
+    }
+    return result;
 }
 
 /**
@@ -224,6 +237,11 @@ long int clear_bits(long int value, long int flag) {
 int little_automaton(int (*transition)(int, char), const char *input_string) {
     int state = 0;
     // put something here
+    // char *ptr = input_string;
+    while (*input_string) {
+	state = (*transition)(state, *input_string);
+	input_string++;
+    }
 
     return state;
 }
