@@ -5,7 +5,8 @@
  
 #pragma once
 char **camel_caser(const char *input_str);
+char *camel_caser_hf( char *input_str);
 void destroy(char **result);
-char* capitalizer(const char *input_str);
+char* capitalizer(char *input_str);
 char *unspacer(char* str);
 int is_letter(char str);
