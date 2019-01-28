@@ -109,12 +109,9 @@ char *camel_caser_hf( char *input_str) {
 
 // helper function to capitalize all words but first
 char* capitalizer( char* input_str) {
-	char capitalized[strlen(input_str) + 1]; // editable copy
-	strcpy(capitalized, input_str);
-
 	size_t j;
-	for (j = 0; j < strlen(capitalized); j++) {
-		capitalized[j] = tolower(capitalized[j]);
+	for (j = 0; j < strlen(input_str); j++) {
+		input_str[j] = tolower(input_str[j]);
 	}
 
 	int cap = 0;
@@ -124,40 +121,30 @@ char* capitalizer( char* input_str) {
 	for (i = 0; i < strlen(input_str); i++) {
 
 
-		if (cap && is_letter(capitalized[i]) && have_we_hit_a_letter_yet) {
-			capitalized[i] -= 32;
+		if (cap && is_letter(input_str[i]) && have_we_hit_a_letter_yet) {
+			input_str[i] -= 32;
 			cap = 0;
 
-		} else if (capitalized[i] == 32) {
+		} else if (input_str[i] == 32) {
 			cap = 1;
 		}
-		if ((!have_we_hit_a_letter_yet) && is_letter(capitalized[i])){
+		if ((!have_we_hit_a_letter_yet) && is_letter(input_str[i])){
 			have_we_hit_a_letter_yet = 1;
 			cap = 0;
 		}
 	}
-	input_str = strdup(capitalized);
 
 	return input_str;
 }
 
 char *unspacer(char* str) {
-	char spaced[strlen(str) + 1];
-	strcpy(spaced, str);
 	size_t i;
-	for (i = 0; i < strlen(spaced); i++) {
-		//	printf("i = %d : current char = %c\n", i, spaced[i]);
-		if (!is_letter(spaced[i])) {
-			//	printf("\nspace\n\n");
-			memmove(&spaced[i], &spaced[i + 1], strlen(spaced) - i);
-			//	printf("\nspaced = %s\n\n", spaced);
+	for (i = 0; i < strlen(str); i++) {
+		if (!is_letter(str[i])) {
+			memmove(&str[i], &str[i + 1], strlen(str) - i);
 			i--;
 		}
 	}
-	// char* result = malloc(strlen(spaced) + 1);
-	// strcpy(result, spaced);
-
-	str = strdup(spaced);
 
 	return str;
 }
