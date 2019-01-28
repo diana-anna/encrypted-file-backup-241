@@ -16,12 +16,12 @@ char **camel_caser(const char *input_str) {
 	int double_punct = 0;
 	size_t i;
 	for (i = 0; i < strlen(input_str); i++) {
-		if (is_letter(input_str[i])) {
-			double_punct = 0;
-		}
+//		if (is_letter(input_str[i])) {
+//			double_punct = 0;
+//		}
 		if (ispunct(input_str[i]) && !double_punct)  {
 			punct_count++;
-			double_punct = 1;
+//			double_punct = 1;
 		}
 	}
 
@@ -33,45 +33,45 @@ char **camel_caser(const char *input_str) {
 	size_t j = 0;
 
 	for (i = 0; i < strlen(input_str); i++) {
-		if (is_letter(input_str[i]) || input_str[i] == 32) {
+//		if (is_letter(input_str[i]) || input_str[i] == 32) {
 			char_count++;
-			double_punct = 0;
-		}
+//			double_punct = 0;
+//		}
 		if ((ispunct(input_str[i]) && !double_punct)) {
 			result[j] = malloc(char_count + 1);
 			j++;
 			char_count = 0;
-			double_punct = 1;
+//			double_punct = 1;
 		}
 	}
 
 
 	// final sentence
 	// used to be j+1
-	result[j] = malloc(char_count + 1);
+//	result[j] = malloc(char_count + 1);
 	double_punct = 0;
 	char_count = 0;
 	j = 0;
 
 
 	for (i = 0; i < strlen(input_str); i++) {
-		if (is_letter(input_str[i]) || input_str[i] == 32) {
-
+//		if (is_letter(input_str[i]) || input_str[i] == 32) {
+		if (j > num_sentences - 1) break;
 			result[j][char_count] = input_str[i];
 			char_count++;
-			double_punct = 0;
-		}
-		if (ispunct(input_str[i]) && !double_punct) {
+//			double_punct = 0;
+//		}
+		if (ispunct(input_str[i]) /*&& !double_punct*/) {
 			result[j][char_count] = 0;
 			//printf("result[%d] = %s\n", j, result[j]);
 			j++;
 			char_count = 0;
-			double_punct = 1;
+			//double_punct = 1;
 		}
 	}
 
 	// set null for end of final sentence
-	result[j][char_count] = 0;
+	//result[j][char_count] = 0;
 	//printf("result[%d] = %s\n", j, result[j]);
 
 
@@ -84,26 +84,13 @@ char **camel_caser(const char *input_str) {
 }
 
 char *camel_caser_hf( char *input_str) {
-	if (input_str == NULL) {
+	if (input_str == NULL || strlen(input_str) == 0) {
 		return NULL;
 	}
 
 	input_str = capitalizer(input_str);
 	input_str = unspacer(input_str);
 	return input_str;
-
-	// int start_index = 0;
-	// int punct_index = 0;
-	// while (*input_str) {
-	// 	char* sentence;
-	// 	while (*input_str && (is_letter(*input_str) || *input_str == 32)) { // while it is a letter or space
-	// 	punct_index++;
-	// 	input_str++;
-	// 	}
-	// 	// from start_index to punct_index is a sentence
-	// 	memmove(&sentence, &input_str - punct_index, punct_index);
-
-	// }
 
 }
 
@@ -159,5 +146,9 @@ int is_letter(char str) {
 }
 
 void destroy(char **result) {
-    return;
+    while (*result) {
+	free(*result);
+    	result++;
+  }
+  free(result);
 }
