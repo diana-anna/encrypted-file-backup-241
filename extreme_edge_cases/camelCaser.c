@@ -31,6 +31,7 @@ char **camel_caser(const char *input_str) {
 	double_punct = 0;
 	int char_count = 0;
 	size_t j = 0;
+	int anything = 0;
 
 	for (i = 0; i < strlen(input_str); i++) {
 //		if (is_letter(input_str[i]) || input_str[i] == 32) {
@@ -38,6 +39,7 @@ char **camel_caser(const char *input_str) {
 //			double_punct = 0;
 //		}
 		if ((ispunct(input_str[i]) && !double_punct)) {
+			anything = 1;
 			result[j] = malloc(char_count + 1);
 			j++;
 			char_count = 0;
@@ -56,7 +58,8 @@ char **camel_caser(const char *input_str) {
 
 	for (i = 0; i < strlen(input_str); i++) {
 //		if (is_letter(input_str[i]) || input_str[i] == 32) {
-		if (j > num_sentences - 1) break;
+		if (j > (size_t) (num_sentences - 1)) break;
+		if (!anything) break;
 			result[j][char_count] = input_str[i];
 			char_count++;
 //			double_punct = 0;
@@ -127,7 +130,7 @@ char* capitalizer( char* input_str) {
 char *unspacer(char* str) {
 	size_t i;
 	for (i = 0; i < strlen(str); i++) {
-		if (!is_letter(str[i])) {
+		if (!is_letter(str[i]) && !isdigit(str[i])) {
 			memmove(&str[i], &str[i + 1], strlen(str) - i);
 			i--;
 		}

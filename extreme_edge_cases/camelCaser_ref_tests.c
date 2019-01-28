@@ -9,7 +9,7 @@
 
 int main() {
     // Enter the string you want to test with the reference here
-    char *input = ". .. . hello. wor.ld";
+    char *input = ".. . . he$l*&lo wo.rl/d";
 
     // This function prints the reference implementation output on the terminal
     print_camelCaser(input);
