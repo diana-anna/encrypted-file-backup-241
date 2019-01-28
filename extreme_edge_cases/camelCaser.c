@@ -12,7 +12,75 @@
 char **camel_caser(const char *input_str) {
 	// dimension 1 = # sentences
 	// dimension 2 = # chars in sentence
-	return NULL;
+	int punct_count = 0;
+	int double_punct = 0;
+	size_t i;
+	for (i = 0; i < strlen(input_str); i++) {
+		if (is_letter(input_str[i])) {
+			double_punct = 0;
+		}
+		if (ispunct(input_str[i]) && !double_punct)  {
+			punct_count++;
+			double_punct = 1;
+		}
+	}
+
+	int num_sentences = punct_count + 1;
+	char** result = (char**) malloc((sizeof(char*) * num_sentences) + 1);
+
+	double_punct = 0;
+	int char_count = 0;
+	size_t j = 0;
+
+	for (i = 0; i < strlen(input_str); i++) {
+		if (is_letter(input_str[i]) || input_str[i] == 32) {
+			char_count++;
+			double_punct = 0;
+		}
+		if ((ispunct(input_str[i]) && !double_punct)) {
+			result[j] = malloc(char_count + 1);
+			j++;
+			char_count = 0;
+			double_punct = 1;
+		}
+	}
+
+
+	// final sentence
+	// used to be j+1
+	result[j] = malloc(char_count + 1);
+	double_punct = 0;
+	char_count = 0;
+	j = 0;
+
+
+	for (i = 0; i < strlen(input_str); i++) {
+		if (is_letter(input_str[i]) || input_str[i] == 32) {
+
+			result[j][char_count] = input_str[i];
+			char_count++;
+			double_punct = 0;
+		}
+		if (ispunct(input_str[i]) && !double_punct) {
+			result[j][char_count] = 0;
+			//printf("result[%d] = %s\n", j, result[j]);
+			j++;
+			char_count = 0;
+			double_punct = 1;
+		}
+	}
+
+	// set null for end of final sentence
+	result[j][char_count] = 0;
+	//printf("result[%d] = %s\n", j, result[j]);
+
+
+	for (i = 0; i < (size_t)num_sentences; i++) {
+		result[i] = camel_caser_hf(result[i]);
+	}
+
+
+	return result;
 }
 
 char *camel_caser_hf( char *input_str) {
