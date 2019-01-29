@@ -64,5 +64,11 @@ int main() {
 	
 	char arr[] = "hello,CS241";
 	tok_step(arr);
+
+	int *i = malloc(sizeof(int));
+    	*i = 0x201;
+    	the_end((void *) i, (void *) i);
+    	free(i);
+
     return 0;
 }
