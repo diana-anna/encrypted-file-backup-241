@@ -1,4 +1,4 @@
-EXES = zombie orphan exec_leak
+EXES = zombie orphan exec_leak sigchld_demo
 all: $(EXES)
 
 zombie: zombies_and_orphans.c
