@@ -5,9 +5,9 @@ echo $1
 
 foo=3
 
-echo $foo
+echo $foo # THIS DOESN'T WORK???
 
-if [ "$1" != "todo.txt" ]
+if [ "$1" != "todo.txt" ] # THIS DOESN'T WORK EITHER
 then
   echo "not todo.txt"
   exit
