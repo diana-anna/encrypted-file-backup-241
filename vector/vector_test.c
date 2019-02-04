@@ -19,11 +19,6 @@ int main(int argc, char *argv[]) {
     vector_push_back(v, &int_test);
     assert(vector_size(v) == 1);
 
-//    printf("(int)*vector_get(v, 0) = %d\n", *(int*)(vector_get(v,0)));
-  //  printf("(int)*vector_begin(v) = %d\n",(int)(*vector_begin(v)));
-   // printf("*(int*)vector_at(v,0) = %d\n", *(int*)vector_at(v,0));
-   // printf("(int)*vector_front(v) = %d\n",(int)(*vector_front(v)));    
-
     assert(*(int*)vector_get(v,0) == 7);
 
     vector_resize(v, 10);
@@ -68,6 +63,22 @@ int main(int argc, char *argv[]) {
     vector_push_back(v, &int_test16);
 
     assert(vector_size(v) == 16);
+    assert(*(int*)vector_get(v, 7) == 1);
+    vector_set(v, 7, &int_test15);
+    assert(*(int*)vector_get(v, 7) == 5);
+
+    assert(vector_capacity(v) == 16);
+    vector_pop_back(v);
+    assert(vector_size(v) == 15);
+    assert(vector_capacity(v) == 16);
+
+    vector_insert(v, 3, &int_test13);
+    assert(*(int*)vector_get(v, 3) == 3);
+    assert(vector_size(v) == 16);
+
+    vector_erase(v, 3);
+    assert(*(int*)vector_get(v,3) == 8);
+    assert(vector_size(v) == 15);
 
     vector_destroy(v);
 
