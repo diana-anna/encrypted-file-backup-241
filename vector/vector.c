@@ -193,7 +193,6 @@ void vector_set(vector *this, size_t position, void *element) {
     assert(this);
     // your code here
 assert(position >= 0);
-    assert(position < this->size);
     if (this->array[position]) (*this->destructor)(this->array[position]);
     this->array[position] = (*this->copy_constructor)(element);
 }
