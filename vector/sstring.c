@@ -15,21 +15,41 @@
 
 struct sstring {
     // Anything you want
+    vector *v;
 };
 
 sstring *cstr_to_sstring(const char *input) {
     // your code goes here
-    return NULL;
+    sstring *s_str = (sstring*) malloc(sizeof(sstring));
+    s_str->v = vector_create(&string_copy_constructor, &string_destructor, &string_default_constructor);
+    size_t i;
+    for (i = 0; i < strlen(input); i++) {
+      char curr = input[i];
+      //vector_set(s_str->v, i, &curr);
+      vector_push_back(s_str->v, &curr);
+    }
+    return s_str;
 }
 
 char *sstring_to_cstr(sstring *input) {
     // your code goes here
-    return NULL;
+    size_t sz = vector_size(input->v);
+    char* cstr = (char*) malloc(sz * sizeof(char));
+    size_t i;
+    for (i = 0; i < sz; i++) {
+      cstr[i] = *(char*) vector_get(input->v, i);
+    }
+    return cstr;
 }
 
 int sstring_append(sstring *this, sstring *addition) {
     // your code goes here
-    return -1;
+    size_t i;
+    size_t sz = vector_size(addition->v);
+    for (i = 0; i < sz; i++) {
+      vector_push_back(this->v, &addition[i]);
+    }
+    return vector_size(this->v);
 }
 
 vector *sstring_split(sstring *this, char delimiter) {
