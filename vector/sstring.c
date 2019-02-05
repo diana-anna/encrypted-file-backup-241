@@ -18,6 +18,10 @@ struct sstring {
     vector *v;
 };
 
+vector* get_vector(sstring* s_str) {
+  return s_str->v;
+}
+
 sstring *cstr_to_sstring(const char *input) {
     // your code goes here
     sstring *s_str = (sstring*) malloc(sizeof(sstring));
@@ -48,8 +52,9 @@ int sstring_append(sstring *this, sstring *addition) {
     size_t i;
     size_t sz = vector_size(addition->v);
     for (i = 0; i < sz; i++) {
-      vector_push_back(this->v, &addition[i]);
+      vector_push_back(this->v, vector_get(addition->v, i));
     }
+    //printf("%s\n", sstring_to_cstr(this));
     return vector_size(this->v);
 }
 

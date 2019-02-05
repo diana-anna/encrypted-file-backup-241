@@ -26,6 +26,9 @@
 /* Forward declare the structure */
 typedef struct sstring sstring;
 
+// helper fcn for testing
+vector* get_vector(sstring *s_str);
+
 /**
  * This function should take in a C-string, and return a pointer to an sstring, 
  * allocating any memory required to create the sstring on the heap.
