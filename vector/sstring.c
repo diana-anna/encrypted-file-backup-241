@@ -74,15 +74,17 @@ vector *sstring_split(sstring *this, char delimiter) {
         vector_push_back(split, word);
         begin = i;
         count = 0;
+//	printf("%s\n", word);
         free(word);
       }
     }
     // final word:
     // plus 1 because count increments at beginning of loop and we exited
     char* word = malloc((sizeof(char) * count) + 1);
-    memmove(word, &this_cstr[i - (count - 1)], count);
+    memmove(word, &this_cstr[i - (count)], count);
     word[count] = 0;
     vector_push_back(split, word);
+//    printf("%s\n", word);
     free(word); 
 
     return split;
@@ -91,14 +93,55 @@ vector *sstring_split(sstring *this, char delimiter) {
 int sstring_substitute(sstring *this, size_t offset, char *target,
                        char *substitution) {
     // your code goes here
+    char* ss_char = sstring_to_cstr(this);
+    if (offset == strlen(ss_char) - 1) return -1;
+
+    char* result = malloc(sizeof(char) * strlen(ss_char) + strlen(substitution) - strlen(target) + 1);
+    size_t k;
+    size_t i = 0;
+    int flag = 0;
+    for (k = 0; k < strlen(ss_char); k++) {
+    if ((strstr(&ss_char[k], target) == &ss_char[k]) && k > offset) {    
+        flag = 1;
+        strcpy (&result[i], substitution);
+        i+=strlen(substitution);
+	    break;
+      } else {
+        result[i] = ss_char[k];
+	i++;
+      }
+    }
+   // result[i + strlen(substitution)] = 0;
+    strcpy(ss_char, result);
+    //ss_char[i + strlen(substitution)] = 0;
+    vector_destroy(this->v);
+    
+//    printf("%s\n", ss_char);  
+    for(i = 0; i < strlen(result); i++) {
+	vector_push_back(this->v, &result[i]);
+    }
+    free(result);
+    if (flag) return 0;
+
+    free(result);
     return -1;
 }
 
 char *sstring_slice(sstring *this, int start, int end) {
     // your code goes here
-    return NULL;
+    assert(start <= end);
+
+    char* slice = malloc((sizeof(char) * (end - start)) + 1);
+    char* this_cstr = sstring_to_cstr(this);
+    assert((size_t)end < strlen(this_cstr));
+    memmove(slice, &this_cstr[start], end-start);
+//    printf("in impl: %s\n", slice);
+    return slice;
 }
 
 void sstring_destroy(sstring *this) {
     // your code goes here
+    vector_clear(this->v);
+    vector_destroy(this->v);
+    free(this);
 }
