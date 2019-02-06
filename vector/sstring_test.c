@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
     sstring_substitute(test_ss4, 4, "sentence", "butt");
 
 //    size_t j;
-    //char* aa = sstring_to_cstr(test_ss4);
-    return 0;
+    char* aa = sstring_to_cstr(test_ss4);
+	printf("%s\n", aa);    
+return 0;
 }

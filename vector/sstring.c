@@ -19,6 +19,7 @@ struct sstring {
 };
 
 vector* get_vector(sstring* s_str) {
+
   return s_str->v;
 }
 
@@ -96,16 +97,16 @@ int sstring_substitute(sstring *this, size_t offset, char *target,
     char* ss_char = sstring_to_cstr(this);
     if (offset == strlen(ss_char) - 1) return -1;
 
-    char* result = malloc(sizeof(char) * strlen(ss_char) + strlen(substitution) - strlen(target) + 1);
+    char* result = malloc((sizeof(char) * strlen(ss_char)) + strlen(substitution) - strlen(target) + 1);
     size_t k;
     size_t i = 0;
     int flag = 0;
     for (k = 0; k < strlen(ss_char); k++) {
-    if ((strstr(&ss_char[k], target) == &ss_char[k]) && k > offset) {    
+    if ((strstr(&ss_char[k], target) == &ss_char[k]) && k > offset && !flag) {    
         flag = 1;
         strcpy (&result[i], substitution);
         i+=strlen(substitution);
-	    break;
+	k += strlen(target);
       } else {
         result[i] = ss_char[k];
 	i++;
