@@ -26,30 +26,30 @@ int main(int argc, char *argv[]) {
     child_argv[i - 1] = 0;
     
     pid_t child_id = fork();
-    printf("fork executed.\n");
     
     if (child_id == -1) {
 	print_fork_failed();
 	exit(1);
     }
-
+   
+    long nano_seconds = 0;
+    time_t seconds = 0;
+    double total_time = 0;
     struct timespec begin, end;
     if (child_id) { // parent
-	printf("parent reached\n");
 	int status;
 	clock_gettime(CLOCK_MONOTONIC, &begin);
 	waitpid(child_id, &status, 0);
 	clock_gettime(CLOCK_MONOTONIC, &end);
-	time_t seconds = end.tv_sec - begin.tv_sec;
-	// for testing - DELETE LATER
-	printf("seconds = %f\n", (double)seconds);
+	nano_seconds = end.tv_nsec - begin.tv_nsec;
+	seconds = end.tv_sec - begin.tv_sec;
+	total_time = seconds + (nano_seconds / 1000000000);
     } else { // child
-	printf("child reached\n");
 	if (execvp(child_argv[0], child_argv) < 0) {
 	    print_exec_failed();
             exit(1);
 	}
      }
-
+    display_results(argv, total_time);
     return 0;
 }
