@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
     pid_t child_id = fork();
     
     if (child_id == -1) {
+	free(child_argv);
 	print_fork_failed();
 	exit(1);
     }
@@ -43,13 +44,15 @@ int main(int argc, char *argv[]) {
 	clock_gettime(CLOCK_MONOTONIC, &end);
 	nano_seconds = end.tv_nsec - begin.tv_nsec;
 	seconds = end.tv_sec - begin.tv_sec;
-	total_time = seconds + (nano_seconds / 1000000000);
+	total_time = seconds + (nano_seconds / 1000000000.);
     } else { // child
 	if (execvp(child_argv[0], child_argv) < 0) {
+	    free(child_argv);
 	    print_exec_failed();
             exit(1);
 	}
      }
     display_results(argv, total_time);
+    free(child_argv);
     return 0;
 }
