@@ -79,9 +79,10 @@ void write_history_file(const char* filename) {
 void commands_from_file(const char* filename) {
   if (access(filename, F_OK | R_OK) == -1) { // file doesn't exist
     print_script_file_error();
+//	printf("dumb bitch u fucked up\n");
     return;
   }
-
+//   printf("dumb bitch u fucked up\n");
   // file exists, open file and read commands line by line
   FILE* command_fs = fopen(filename, "r");
   char* buffer = NULL;
@@ -92,13 +93,16 @@ void commands_from_file(const char* filename) {
     if ((int)command == -1) break;
     buffer[command - 1] = 0; // get rid of \n
 
-    char* buf = NULL;
-    int n = 0;
-    getcwd(buf, n);
-    if (buf && command) {
+    char buf[1024];
+    //int n = 0;
+//    getcwd(buf, sizeof(buf));
+    if (getcwd(buf, sizeof(buf)) && command) {
       view_command(buf, buffer);
     } else {
-      //fuck_everything();
+	printf("dumb bitch u fucked up\n");
+	printf("buf = %s\n", buf);
+	printf("command = %zu\n", command);  
+    //fuck_everything();
       print_script_file_error();
       return;
     }
@@ -336,9 +340,9 @@ void exclamation(const char* cwd, const char* command) {
   }
   if (strlen(command) > 1) { // search for search_term
     const char* search_term = &command[1];
-    size_t i;
+    int i;
     //int found = 0;
-    for (i = 0; i < vector_size(command_history); i++) {
+    for (i = (int)vector_size(command_history) - 1; i >= 0; i--) {
       char* execute_me = *vector_at(command_history, i);
       if (!strncmp(search_term, execute_me, strlen(search_term))) {
         //found = 1;

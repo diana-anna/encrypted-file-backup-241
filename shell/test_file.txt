@@ -1,4 +1,8 @@
-cd ..
-ls
-sleep 2
-echo Finished!
+echo katya
+echo zamo
+echo lodchikova
+echo !
+echo !!
+echo !!!
+echo katya was the true winner of as2
+echo you're lying if you disagree
