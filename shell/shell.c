@@ -290,14 +290,15 @@ void pound(const char* cwd, const char* command) {
 
   size_t i;
 
-  for (i = 0; i < strlen(command); i++) {
+  for (i = 1; i < strlen(command); i++) {
     // check that all numbers
     if (!isdigit(command[i])) {
+//	printf("%c\n", command[i]);
       print_invalid_index();
       return;
     }
   }
-
+//printf("heck\n");
   char* ptr;
   long command_num = strtol(&command[1], &ptr, 10);
   if (command_num < 0 || (size_t) command_num > vector_size(command_history) - 1) {
@@ -484,8 +485,8 @@ int shell(int argc, char *argv[]) {
     char* h_arg = NULL;
     char* f_arg = NULL;
     char opt;
-    command_history = vector_create(char_copy_constructor, char_destructor,
-      char_default_constructor); // free ?
+    command_history = vector_create(string_copy_constructor, string_destructor,
+      string_default_constructor); // free ?
 
 //////////////////////////////////////////////////////////////////////////////////////////////
     while ((opt = getopt(argc, argv, "h:f:")) != -1) {
