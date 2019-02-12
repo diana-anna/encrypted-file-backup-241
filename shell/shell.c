@@ -36,9 +36,10 @@ extern int optind;
 static vector* command_history;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-void fuck_everything() {
-  // frees all
-
+void fuck_everything(int sig) {
+//  printf("fuck you\n");
+  int status;
+  while (waitpid((pid_t) (-1), &status, WNOHANG) > 0) {}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,10 +109,13 @@ void commands_from_file(const char* filename) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 void view_command(const char* cwd, const char* command) {
-
+//	printf("command = %s\n",command);
+//	printf("strlen = %lu\n", strlen(command));
+//printf("cwd = %s\n", cwd);
 
   if (!cwd || !command) {
     print_script_file_error();
+//		printf("fuckin hell man\n");
     return;
   }
 
@@ -121,6 +125,7 @@ void view_command(const char* cwd, const char* command) {
 
   // built-in
   if (command_[0] == '!') {
+//	printf("\n\n!\n\n");
     exclamation(cwd, command_);
     return;
 
@@ -128,14 +133,15 @@ void view_command(const char* cwd, const char* command) {
     pound(cwd, command_);
     return;
 
-  } else if (strncmp(command_, "cd",(size_t) 2)) {
+  } else if (!strncmp(command_, "cd",(size_t) 2)) {
+  //printf("\n\na cd command was made\n\n");
     cd(cwd, command_);
     return;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
   } else { // external
-
+//printf("\n\ngot to external?\n\n");
     int logical = -1;
 
     // logicals
@@ -164,7 +170,6 @@ void view_command(const char* cwd, const char* command) {
       return;
 //////////////////////////////////////////////////////////////////////////////////////////////
     } else if (logical == 1) { // &&
-      // TODO
       print_prompt(cwd, getpid());
       print_command(command_);
 
@@ -200,7 +205,6 @@ void view_command(const char* cwd, const char* command) {
       return;
       //////////////////////////////////////////////////////////////////////////////////////////////
     } else if (logical == 2) { // ||
-      // TODO
 
       print_prompt(cwd, getpid());
       print_command(command_);
@@ -237,7 +241,6 @@ void view_command(const char* cwd, const char* command) {
       return;
       //////////////////////////////////////////////////////////////////////////////////////////////
     } else if (logical == 3) { // ;
-      // TODO
       print_prompt(cwd, getpid());
       print_command(command_);
 
@@ -287,7 +290,7 @@ void pound(const char* cwd, const char* command) {
 
   size_t i;
 
-  for (i = 0; i < strlen(&command[1]); i++) {
+  for (i = 0; i < strlen(command); i++) {
     // check that all numbers
     if (!isdigit(command[i])) {
       print_invalid_index();
@@ -309,8 +312,15 @@ void pound(const char* cwd, const char* command) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 void exclamation(const char* cwd, const char* command) {
+
+//printf("\n\n!!\n\n");
   if (!strcmp(command, "!history")) { // NOT STORED IN HISTORY VECTOR
+
+//	printf("!history called\n\n");
+
     size_t i;
+  
+//	printf("size = %zu\n", vector_size(command_history));
     for (i = 0; i < vector_size(command_history); i++) {
       print_history_line(i, *vector_at(command_history, i));
     }
@@ -344,6 +354,7 @@ void exclamation(const char* cwd, const char* command) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 void cd(const char* cwd, const char* command) {
+ printf("\n\ncd called\n\n");
   if (strlen(command) < 4) {
     print_no_directory(&command[0]);
     return;
@@ -362,6 +373,11 @@ int external_commands(const char* cwd, const char* command) {
   int backgrounding = 0;
   char* command_;
 
+  if (command[strlen(command) - 1] == '&') {
+      backgrounding = 1;
+//      signal(SIGCHLD, fuck_everything);
+  }
+
   pid_t child_id = fork();
 
   if (child_id < 0) {
@@ -372,8 +388,8 @@ int external_commands(const char* cwd, const char* command) {
 //////////////////////////////////////////////////////////////////////////////////////////////
   if (child_id == 0) { // CHILD
 
-    if (command[strlen(command) - 1] == '&') {
-      backgrounding = 1;
+    if (backgrounding) {
+      //backgrounding = 1;
       command_ = strndup(command, strlen(command - 1)); // get command without '&'
       //free this^^^^^^
 
@@ -491,15 +507,32 @@ int shell(int argc, char *argv[]) {
 //////////////////////////////////////////////////////////////////////////////////////////////
     if (h_flag) {
       write_history_file(h_arg);
+      free(h_arg);
+      free(h_arg);
     }
 
     if (f_flag) {
       commands_from_file(f_arg);
+      free(f_arg);
     }
 
-    free(h_arg);
-    free(f_arg);
+    // get from stdin
+    char *buffer;
+    size_t n = 0;
 
+    while(1) {
+      char dir[1024];
+      //int num = 0;
+      //getcwd(dir, sizeof(dir));
+      if (getcwd(dir, sizeof(dir))) print_prompt(dir, getpid());
+
+      size_t command = getline(&buffer, &n, stdin);
+      if ((int) command == -1 || !buffer) break; // eof
+
+	buffer[strlen(buffer) - 1] = 0;
+
+      view_command(dir, buffer);
+    }
     return 0;
 }
 
