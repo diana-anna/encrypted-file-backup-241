@@ -3,16 +3,16 @@
 #include <stdio.h>
 
 int main() {
-  int* intPtr = sbrk(sizeof(int));
+  int* intPtr = sbrk(/* SOME VALUE HERE */);
   *intPtr = 241;
 
-  int** addressPtr = sbrk(sizeof(int *));
+  int** addressPtr = sbrk(/* SOME VALUE HERE */);
   *addressPtr = intPtr;
 
-  char* string = sbrk(12);
+  char* string = sbrk(/* SOME VALUE HERE */);
   strcpy(string, "Hello world");
 
-  printf("%p", sbrk(0));
+  printf("%p", sbrk(/* SOME VALUE HERE */));
 
   return 0;
 }

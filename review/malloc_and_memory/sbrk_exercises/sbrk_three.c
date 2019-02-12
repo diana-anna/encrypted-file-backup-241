@@ -3,24 +3,24 @@
 #include <stdio.h>
 
 int main() {
-  char* memory = sbrk(3*sizeof(unsigned int) + sizeof(int) + sizeof(int *) + 12);
+  char* memory = sbrk(/* SOME VALUE HERE */);
 
-  unsigned int * sizePtrOne = (unsigned int*) (memory);
-  *sizePtrOne = sizeof(int);
-  int* intPtr = (int *)(sizePtrOne + 1);
+  unsigned int * sizePtrOne = (unsigned int*) (memory + /* SOME VALUE HERE */);
+  *sizePtrOne = /* SOME VALUE HERE */;
+  int* intPtr = (int *)(sizePtrOne + /* SOME VALUE HERE */);
   *intPtr = 241;
 
-  unsigned int * sizePtrTwo = (unsigned int*) (memory + sizeof(unsigned int) + sizeof(int));
-  *sizePtrTwo = sizeof(int *);
-  int** addressPtr = (int **)(sizePtrTwo + 1);
+  unsigned int * sizePtrTwo = (unsigned int*) (memory + /* SOME VALUE HERE */);
+  *sizePtrTwo = /* SOME VALUE HERE */;
+  int** addressPtr = (int **)(sizePtrTwo + /* SOME VALUE HERE */);
   *addressPtr = intPtr;
 
-  unsigned int * sizePtrThree = (unsigned int*) (memory + 2*sizeof(unsigned int) + sizeof(int) + sizeof(int*));
-  *sizePtrThree = 12;
-  char* string = (char *)(sizePtrThree + 1);
+  unsigned int * sizePtrThree = (unsigned int*) (memory + /* SOME VALUE HERE */);
+  *sizePtrThree = /* SOME VALUE HERE */;
+  char* string = (char *)(sizePtrThree + /* SOME VALUE HERE */);
   strcpy(string, "Hello world");
 
-  printf("%p", sbrk(0));
+  printf("%p", sbrk(/* SOME VALUE HERE */));
 
   return 0;
 }

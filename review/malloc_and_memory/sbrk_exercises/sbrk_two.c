@@ -3,22 +3,22 @@
 #include <stdio.h>
 
 int main() {
-  unsigned int * sizePtrOne = sbrk(sizeof(unsigned int) + sizeof(int));
-  *sizePtrOne = sizeof(int);
-  int* intPtr = (int *)(sizePtrOne + 1);
+  unsigned int * sizePtrOne = sbrk(/* SOME VALUE HERE */);
+  *sizePtrOne = /* SOME VALUE HERE */;
+  int* intPtr = (int *)(sizePtrOne + /* SOME VALUE HERE */);
   *intPtr = 241;
 
-  unsigned int * sizePtrTwo = sbrk(sizeof(unsigned int) + sizeof(int *));
-  *sizePtrTwo = sizeof(int *);
-  int** addressPtr = (int **)(sizePtrTwo + 1);
+  unsigned int * sizePtrTwo = sbrk(/* SOME VALUE HERE */);
+  *sizePtrTwo = /* SOME VALUE HERE */;
+  int** addressPtr = (int **)(sizePtrTwo + /* SOME VALUE HERE */);
   *addressPtr = intPtr;
 
-  unsigned int * sizePtrThree = sbrk(sizeof(unsigned int) + 12);
-  *sizePtrThree = 12;
-  char* string = (char *)(sizePtrThree + 1);
+  unsigned int * sizePtrThree = sbrk(/* SOME VALUE HERE */);
+  *sizePtrThree = /* SOME VALUE HERE */;
+  char* string = (char *)(sizePtrThree + /* SOME VALUE HERE */);
   strcpy(string, "Hello world");
 
-  printf("%p", sbrk(0));
+  printf("%p", sbrk(/* SOME VALUE HERE */));
 
   return 0;
 }
