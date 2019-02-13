@@ -34,7 +34,7 @@ extern int optind;
 //////////////////////////////////////////////////////////////////////////////////////////////
 // globals
 static vector* command_history;
-
+static char* history_file;
 //////////////////////////////////////////////////////////////////////////////////////////////
 void fuck_everything(int sig) {
 //  printf("fuck you\n");
@@ -46,7 +46,8 @@ void fuck_everything(int sig) {
 void write_history_file(const char* filename) {
   if (access(filename, F_OK | R_OK | W_OK) == -1) { // file doesn't exist
     print_history_file_error();
-    FILE* history_fs = fopen(filename, "w+"); // make new file with name 'filename'
+    FILE* history_fs = fopen(filename, "a+"); // make new file with name 'filename'
+    history_file = (char*)filename;
     size_t i;
     for (i = 0; i < vector_size(command_history); i++) { // write all commands
       //char* curr = *vector_at(command_history, i);
@@ -59,7 +60,8 @@ void write_history_file(const char* filename) {
   //////////////////////////////////////////////////////////////////////////////////////////////
 
   // file exists, load in history file as history
-  FILE* history_fs = fopen(filename, "r");
+  FILE* history_fs = fopen(filename, "a+");
+  history_file = (char*) filename;
   char* buffer = NULL;
   size_t n = 0;
 
@@ -71,6 +73,8 @@ void write_history_file(const char* filename) {
     buffer[command - 1] = 0; // get rid of \n
     vector_push_back(command_history, buffer);
   }
+
+
   fclose(history_fs);
 
 }
@@ -93,18 +97,18 @@ void commands_from_file(const char* filename) {
     if ((int)command == -1) break;
     buffer[command - 1] = 0; // get rid of \n
 
+     FILE *history_fs = fopen(history_file, "a+");
+      fprintf(history_fs,"%s", buffer);
+      fprintf(history_fs, "\n");
+    fclose(history_fs);
+
     char buf[1024];
-    //int n = 0;
-//    getcwd(buf, sizeof(buf));
     if (getcwd(buf, sizeof(buf)) && command) {
       view_command(buf, buffer);
     } else {
-	printf("dumb bitch u fucked up\n");
-	printf("buf = %s\n", buf);
-	printf("command = %zu\n", command);  
-    //fuck_everything();
       print_script_file_error();
-      return;
+      fclose(command_fs);
+	return;
     }
 
   }
@@ -123,7 +127,13 @@ void view_command(const char* cwd, const char* command) {
     return;
   }
 
-  char* command_ = strdup(command);
+   FILE *history_fs = fopen(history_file, "a+");
+      fprintf(history_fs,"%s", command);
+      fprintf(history_fs, "\n");
+    fclose(history_fs);
+    char* command_ = strdup(command);
+    vector_push_back(command_history, command_);
+
 
   print_prompt(cwd, getpid());
 
@@ -168,7 +178,6 @@ void view_command(const char* cwd, const char* command) {
         //free?
         return;
       }
-      vector_push_back(command_history, command_);
       print_command_executed(getpid());
       //free?
       return;
@@ -334,7 +343,7 @@ void exclamation(const char* cwd, const char* command) {
 
   if (strlen(command) == 1) { // exec last command
     char* last_command = *vector_at(command_history, vector_size(command_history) - 1);
-    vector_push_back(command_history, last_command);
+    //vector_push_back(command_history, last_command);
     view_command(cwd, last_command);
     return;
   }
@@ -491,7 +500,7 @@ int shell(int argc, char *argv[]) {
     char opt;
     command_history = vector_create(string_copy_constructor, string_destructor,
       string_default_constructor); // free ?
-
+    history_file = NULL;
 //////////////////////////////////////////////////////////////////////////////////////////////
     while ((opt = getopt(argc, argv, "h:f:")) != -1) {
       switch(opt) {
@@ -535,6 +544,13 @@ int shell(int argc, char *argv[]) {
       if ((int) command == -1 || !buffer) break; // eof
 
 	buffer[strlen(buffer) - 1] = 0;
+
+      //char* curr = *vector_at(command_history, i);
+
+//	FILE *history_fs = fopen(history_file, "a+");
+  //    fprintf(history_fs,"%s", buffer);
+    //  fprintf(history_fs, "\n");
+    //fclose(history_fs);
 
       view_command(dir, buffer);
     }
