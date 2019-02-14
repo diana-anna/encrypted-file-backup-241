@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <stdio.h>
 #include "orderbook.h"
 
 #define STDOUT 1
@@ -36,6 +36,7 @@ int main(int argc, char *argv[]) {
         free_LL(&order_book);
     } else {
         // your code here
+
     }
 
     return 0;
@@ -227,8 +228,11 @@ void print_orderbook_LL(OrderNode *head, int out) {
     while (cur != NULL) { // loop on the list starting from head
         sprintf(line, "%ld %c %ld %lf\n", cur->id,
                 (cur->side == BUY) ? 'B' : 'S', cur->quantity, cur->price);
-        write(out, line, strlen(line));
-        cur = cur->next;
+        //write(out, line, strlen(line));
+	FILE* os = fopen(out, "a+");
+	fprintf(os, line);
+	fclose(os);
+	cur = cur->next;
     }
 }
 
