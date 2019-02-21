@@ -13,11 +13,16 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <time.h>
+#include <dirent.h>
 
 void view_command(const char* cwd, const char* command);
 void exclamation(const char* cwd, const char* command);
 void pound(const char* cwd, const char* command);
 void cd(const char* cwd, const char* command);
+void ps(const char* cwd, const char* command);
+void parse_process_info(pid_t proc_pid);
+void panic(const char* cwd, const char* command);
 int external_commands(const char* cwd, const char* command);
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,7 +78,7 @@ void write_history_file(const char* filename) {
     buffer[command - 1] = 0; // get rid of \n
     vector_push_back(command_history, buffer);
   }
-
+    free(buffer);
 
   fclose(history_fs);
 
@@ -86,6 +91,11 @@ void commands_from_file(const char* filename) {
 //	printf("dumb bitch u fucked up\n");
     return;
   }
+
+    if (!history_file) {
+        write_history_file("history_file.txt");
+    }
+
 //   printf("dumb bitch u fucked up\n");
   // file exists, open file and read commands line by line
   FILE* command_fs = fopen(filename, "r");
@@ -108,10 +118,12 @@ void commands_from_file(const char* filename) {
     } else {
       print_script_file_error();
       fclose(command_fs);
-	return;
+	    free(buffer);
+        return;
     }
 
   }
+    free(buffer);
 
 }
 
@@ -126,7 +138,9 @@ void view_command(const char* cwd, const char* command) {
 //		printf("fuckin hell man\n");
     return;
   }
-
+    if (!history_file) {
+        write_history_file("history_file.txt");
+    }
    FILE *history_fs = fopen(history_file, "a+");
       fprintf(history_fs,"%s", command);
       fprintf(history_fs, "\n");
@@ -141,20 +155,31 @@ void view_command(const char* cwd, const char* command) {
   if (command_[0] == '!') {
 //	printf("\n\n!\n\n");
     exclamation(cwd, command_);
+    free(command_);
     return;
 
   } else if (command_[0] == '#') {
     pound(cwd, command_);
+    free(command_);
     return;
 
   } else if (!strncmp(command_, "cd",(size_t) 2)) {
   //printf("\n\na cd command was made\n\n");
     cd(cwd, command_);
+    free(command_);
     return;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-  } else { // external
+    } else if (!strncmp(command_, "kill", 4)) {
+        panic(cwd, command_);
+        free(command_);
+        return;
+    } else if (!strcmp(command_, "ps")) {
+        ps(cwd, command_);
+        free(command_);
+        return;
+    } else { // external
 //printf("\n\ngot to external?\n\n");
     int logical = -1;
 
@@ -176,10 +201,12 @@ void view_command(const char* cwd, const char* command) {
       if (external_commands(cwd, command_) == -1) {
         print_exec_failed(command_);
         //free?
+        free(command_);
         return;
       }
       print_command_executed(getpid());
       //free?
+        free(command_);
       return;
 //////////////////////////////////////////////////////////////////////////////////////////////
     } else if (logical == 1) { // &&
@@ -209,12 +236,14 @@ void view_command(const char* cwd, const char* command) {
       for (i = 0; i < (size_t) (count + 1); i++) {
         if (external_commands(cwd, args[i]) == -1) {
           print_exec_failed(args[i]);
+          free(command_);
           return;
         }
       }
 
       print_command_executed(getpid());
       //free?
+        free(command_);
       return;
       //////////////////////////////////////////////////////////////////////////////////////////////
     } else if (logical == 2) { // ||
@@ -246,11 +275,13 @@ void view_command(const char* cwd, const char* command) {
         if (external_commands(cwd, args[i]) != -1) { // one works
           print_command_executed(getpid());
           //free?
+            free(command_);
           return;
         }
       }
       print_exec_failed(command_); // every single one failed
       //free?
+        free(command_);
       return;
       //////////////////////////////////////////////////////////////////////////////////////////////
     } else if (logical == 3) { // ;
@@ -286,6 +317,7 @@ void view_command(const char* cwd, const char* command) {
       }
 
       //free?
+        free(command_);
       return;
 
     }
@@ -342,6 +374,10 @@ void exclamation(const char* cwd, const char* command) {
   }
 
   if (strlen(command) == 1) { // exec last command
+    if (vector_size(command_history) == 0) {
+        print_no_history_match();
+        return;
+    }
     char* last_command = *vector_at(command_history, vector_size(command_history) - 1);
     //vector_push_back(command_history, last_command);
     view_command(cwd, last_command);
@@ -381,6 +417,23 @@ void cd(const char* cwd, const char* command) {
   //vector_push_back(command_history, command);
 }
 
+//pid_t parse_proc()
+
+void panic(const char* cwd, const char* command) {
+    // kill switch
+    if (strlen(command) == 4) {
+        print_invalid_command(command);
+        return;
+    }
+
+}
+
+void parse_process_info(pid_t proc_pid) {
+}
+
+void ps(const char* cwd, const char* command) {   
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 int external_commands(const char* cwd, const char* command) {
 
@@ -418,7 +471,7 @@ int external_commands(const char* cwd, const char* command) {
       if (command_[i] == ' ') count++;
     }
 
-    char** args = malloc((count + 1) * sizeof(char*) + 1);
+    char** args = malloc((count + 2) * sizeof(char*) + 1);
     char* token;
     token = strtok(command_, " ");
     i = 0;
@@ -429,7 +482,8 @@ int external_commands(const char* cwd, const char* command) {
       i++;
       token = strtok(NULL, " ");
     }
-
+//    printf("\n\n\ncount = %d and i = %zu\n\n\n", count, i);
+    args[i] = malloc(1);
     args[i] = 0; // terminate args w null
     execvp(args[0], args);
     print_exec_failed(command);
@@ -500,6 +554,7 @@ int shell(int argc, char *argv[]) {
     char opt;
     command_history = vector_create(string_copy_constructor, string_destructor,
       string_default_constructor); // free ?
+    vector_empty(command_history);
     history_file = NULL;
 //////////////////////////////////////////////////////////////////////////////////////////////
     while ((opt = getopt(argc, argv, "h:f:")) != -1) {
@@ -522,7 +577,6 @@ int shell(int argc, char *argv[]) {
     if (h_flag) {
       write_history_file(h_arg);
       free(h_arg);
-      free(h_arg);
     }
 
     if (f_flag) {
@@ -531,7 +585,7 @@ int shell(int argc, char *argv[]) {
     }
 
     // get from stdin
-    char *buffer;
+    char *buffer = NULL;
     size_t n = 0;
 
     while(1) {
@@ -545,15 +599,9 @@ int shell(int argc, char *argv[]) {
 
 	buffer[strlen(buffer) - 1] = 0;
 
-      //char* curr = *vector_at(command_history, i);
-
-//	FILE *history_fs = fopen(history_file, "a+");
-  //    fprintf(history_fs,"%s", buffer);
-    //  fprintf(history_fs, "\n");
-    //fclose(history_fs);
-
       view_command(dir, buffer);
     }
+    free(buffer);
     return 0;
 }
 
