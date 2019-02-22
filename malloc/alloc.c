@@ -8,6 +8,51 @@
 #include <string.h>
 #include <unistd.h>
 
+// struct
+typedef struct meta_data {
+    size_t size; // includes size of data and size of meta_data
+    struct meta_data* next;
+    struct meta_data* prev;
+    void* data;
+    int is_allocated;
+} meta_data;
+
+static meta_data* head = NULL;
+
+// combines a block with its next and/or prev if they are free
+void coalesce(meta_data* addr) {
+    if (!addr->next->is_allocated) { // merge current and next
+        addr->size += addr->next->size; // size of 1 and 2
+        meta_data* old_next_next = addr->next->next; // 3
+        addr->next = old_next_next; // 1->next = 3
+        old_next_next->prev = addr; // 3->prev = 1
+    }
+    if (!addr->prev->is_allocated) { // merge current and prev
+        addr->size += addr->prev->size; // size of 1 and 0
+        meta_data* old_prev_prev = addr->prev->prev; // -1
+        addr->prev = old_prev_prev; // 1->prev = -1
+        old_prev_prev->next = addr; // -1->next = 1
+    }
+    return;
+}
+
+// splits a block that has been partially allocd
+void split(meta_data* addr, size_t size_allocd) {
+}
+
+// returns pointer to ptr's metadata address
+meta_data* find_meta_data(void* ptr) {
+    if (!head) return NULL;
+    meta_data* temp = head;
+    while (temp) {
+        if (temp->data == ptr) {
+            return temp;
+        }
+        temp = temp->next;
+    }
+    return NULL;
+}
+
 /**
  * Allocate space for array in memory
  *
@@ -80,6 +125,11 @@ void *malloc(size_t size) {
  */
 void free(void *ptr) {
     // implement free!
+    meta_data* md = find_meta_data(ptr); // check return type
+    if (!md) return;
+    
+    md->is_allocated = 0;
+    coalesce(md);
 }
 
 /**
