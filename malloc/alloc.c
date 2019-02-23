@@ -10,7 +10,7 @@
 
 // struct
 typedef struct meta_data {
-    size_t size; // includes size of data and size of meta_data
+    size_t size; // size of data ONLY
     struct meta_data* next;
     struct meta_data* prev;
     void* data;
@@ -18,30 +18,58 @@ typedef struct meta_data {
 } meta_data;
 
 static meta_data* head = NULL;
+static int heap_initialized = 0;
+
+void heap_init() {
+    void* brk = sbrk(sizeof(meta_data) + 8); // idk it seems ok
+    head = (meta_data*) brk; // head points to first md
+    head->next = NULL;
+    head->prev = NULL;
+    head->size = 8;
+    head->is_allocated = 0;
+    heap_initialized = 1;
+}
 
 // combines a block with its next and/or prev if they are free
-void coalesce(meta_data* addr) {
+void coalesce(meta_data* addr) { // ASK ABOUT SIZE CHANGES
     if (!addr->next->is_allocated) { // merge current and next
-        addr->size += addr->next->size; // size of 1 and 2
-        meta_data* old_next_next = addr->next->next; // 3
-        addr->next = old_next_next; // 1->next = 3
-        old_next_next->prev = addr; // 3->prev = 1
+        meta_data* neighbor = addr->next;
+
+        // size of 1 and 2 + size of 2's meta_data
+        addr->size += neighbor->size + sizeof(neighbor);
+        meta_data* old_neighbor_next = neighbor->next;
+        addr->next = old_neighbor_next;
+        old_neighbor_next->prev = addr;
     }
     if (!addr->prev->is_allocated) { // merge current and prev
-        addr->size += addr->prev->size; // size of 1 and 0
-        meta_data* old_prev_prev = addr->prev->prev; // -1
-        addr->prev = old_prev_prev; // 1->prev = -1
-        old_prev_prev->next = addr; // -1->next = 1
+        meta_data* neighbor = addr->prev;    
+
+    // size of 1 and 0 + size of 1's meta_data
+        neighbor->size += addr->size + sizeof(addr);
+        meta_data* old_addr_next = addr->next;
+        neighbor->next = old_addr_next;
+        old_addr_next->prev = neighbor;
     }
-    return;
 }
 
 // splits a block that has been partially allocd
 void split(meta_data* addr, size_t size_allocd) {
+    
+}
+
+// returns pointer to end of LL
+meta_data* get_end() {
+    if (!head) return NULL;
+    meta_data* temp = head;
+    while (temp->next) {
+        temp = temp->next;
+    }
+
+    return temp;
 }
 
 // returns pointer to ptr's metadata address
-meta_data* find_meta_data(void* ptr) {
+meta_data* meta_data_from_ptr(void* ptr) {
     if (!head) return NULL;
     meta_data* temp = head;
     while (temp) {
@@ -51,6 +79,33 @@ meta_data* find_meta_data(void* ptr) {
         temp = temp->next;
     }
     return NULL;
+}
+
+// returns pointer to first meta_data with size >= requested
+meta_data* meta_data_from_size(size_t size) {
+    if (!head) return NULL;
+
+    meta_data* temp = head;
+    while(temp) {
+        if (!temp->is_allocated && temp->size >= size) {
+            return temp;
+        }
+        temp = temp->next;
+    }
+    
+    // not enough space -> sbrk
+// should be meta_data* ?????idk
+    void* brk = sbrk(sizeof(meta_data) + (2 * size)); // idk just be safe?
+    if (brk == (void*) -1) return NULL; // not enough memory :(((
+    meta_data* new_md = (meta_data*) brk;
+    new_md->size = 2 * size;
+    new_md->is_allocated = 0;
+    new_md->next = NULL;
+    meta_data* new_md_prev = get_end();
+    new_md_prev->next = new_md;
+    new_md->prev = new_md_prev;
+    
+    return meta_data_from_size(size);
 }
 
 /**
@@ -104,7 +159,12 @@ void *calloc(size_t num, size_t size) {
  */
 void *malloc(size_t size) {
     // implement malloc!
-    return NULL;
+    if (!heap_initialized) heap_init();
+
+    meta_data* md = meta_data_from_size(size);
+    if (md == NULL) return NULL;
+
+    return md;
 }
 
 /**
@@ -125,7 +185,7 @@ void *malloc(size_t size) {
  */
 void free(void *ptr) {
     // implement free!
-    meta_data* md = find_meta_data(ptr); // check return type
+    meta_data* md = meta_data_from_ptr(ptr); // check return type
     if (!md) return;
     
     md->is_allocated = 0;
