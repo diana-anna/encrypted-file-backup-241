@@ -54,7 +54,16 @@ void coalesce(meta_data* addr) { // ASK ABOUT SIZE CHANGES
 
 // splits a block that has been partially allocd
 void split(meta_data* addr, size_t size_allocd) {
-    
+    meta_data* temp = addr;
+    temp += sizeof(addr) + size_allocd; // marks beginning of unallocated block
+    //meta_data* end_of_block = temp;
+    //while (!end_of_block->is_allocated) {
+    //    end_of_block = end_of_block++;
+    //} // marks the end of the unallocated block
+    //end_of_block--;
+    temp->size = addr->size - size_allocd;
+    addr->size = size_allocd;
+    temp->is_allocated = 0;
 }
 
 // returns pointer to end of LL
@@ -87,7 +96,10 @@ meta_data* meta_data_from_size(size_t size) {
 
     meta_data* temp = head;
     while(temp) {
-        if (!temp->is_allocated && temp->size >= size) {
+        if (!temp->is_allocated && temp->size == size) {
+            return temp;
+        } else if (!temp->is_allocated && temp->size > size) {
+            split(temp, size);
             return temp;
         }
         temp = temp->next;
