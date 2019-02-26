@@ -133,7 +133,10 @@ meta_data* meta_data_from_size(size_t size) {
  */
 void *calloc(size_t num, size_t size) {
     // implement calloc!
-    return NULL;
+    meta_data* temp = malloc(size * num);
+    if (!temp) return NULL;
+    memset(temp, 0, num * size);
+    return temp;
 }
 
 /**
@@ -239,5 +242,21 @@ void free(void *ptr) {
  */
 void *realloc(void *ptr, size_t size) {
     // implement realloc!
-    return NULL;
+    if (!ptr) return malloc(size);
+
+    if (!size) {
+        free(ptr);
+        return NULL;
+    }
+
+    meta_data* md = (meta_data*) ptr;
+    meta_data* temp = malloc(size);
+
+    if (size > md->size) {
+        memcpy(temp, md, md->size);
+        return temp;
+    }
+
+    memcpy(temp, md, size);
+    return temp;
 }
