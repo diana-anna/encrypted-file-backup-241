@@ -104,7 +104,6 @@ void* split(meta_data* addr, size_t size_allocd) {
     mid->prev = addr->prev;
     if (addr->next) {
         addr->next->prev = mid;
-        if (!addr->prev) head = mid;
     }
     if (addr->prev) {
         addr->prev->next = mid;
@@ -144,8 +143,8 @@ meta_data* meta_data_from_size(size_t size) {
         temp->is_allocated = 1;
         return temp;
     }
-    temp->is_allocated = 1;
-    return temp;
+    ret->is_allocated = 1;
+    return ret;
 }
 
 /**
@@ -292,7 +291,7 @@ void *realloc(void *ptr, size_t size) {
     meta_data* md = (meta_data*) ptr;
     meta_data* temp = malloc(size);
 
-    if (size >= md->size) {
+    if (size > md->size) {
         memcpy(temp, md, md->size);
         free(ptr);
         return temp;
