@@ -9,14 +9,14 @@
 
 int main() {
     malloc(1);
-
+    
     int i;
     int **arr = malloc(TOTAL_ALLOCS * sizeof(int *));
     if (arr == NULL) {
         fprintf(stderr, "Memory failed to allocate!\n");
         return 1;
     }
-
+    
     for (i = 0; i < TOTAL_ALLOCS; i++) {
         arr[i] = malloc(sizeof(int));
         if (arr[i] == NULL) {

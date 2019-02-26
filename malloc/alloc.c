@@ -2,7 +2,7 @@
  * Malloc Lab
  * CS 241 - Spring 2019
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,7 +42,7 @@ void coalesce(meta_data* addr) { // ASK ABOUT SIZE CHANGES
         old_neighbor_next->prev = addr;
     }
     if (!addr->prev->is_allocated) { // merge current and prev
-        meta_data* neighbor = addr->prev;    
+        meta_data* neighbor = addr->prev;
 
     // size of 1 and 0 + size of 1's meta_data
         neighbor->size += addr->size + sizeof(addr);
@@ -52,19 +52,7 @@ void coalesce(meta_data* addr) { // ASK ABOUT SIZE CHANGES
     }
 }
 
-// splits a block that has been partially allocd
-void split(meta_data* addr, size_t size_allocd) {
-    meta_data* temp = addr;
-    temp += sizeof(addr) + size_allocd; // marks beginning of unallocated block
-    //meta_data* end_of_block = temp;
-    //while (!end_of_block->is_allocated) {
-    //    end_of_block = end_of_block++;
-    //} // marks the end of the unallocated block
-    //end_of_block--;
-    temp->size = addr->size - size_allocd;
-    addr->size = size_allocd;
-    temp->is_allocated = 0;
-}
+
 
 // returns pointer to end of LL
 meta_data* get_end() {
@@ -90,34 +78,74 @@ meta_data* meta_data_from_ptr(void* ptr) {
     return NULL;
 }
 
-// returns pointer to first meta_data with size >= requested
-meta_data* meta_data_from_size(size_t size) {
-    if (!head) return NULL;
-
-    meta_data* temp = head;
-    while(temp) {
-        if (!temp->is_allocated && temp->size == size) {
-            return temp;
-        } else if (!temp->is_allocated && temp->size > size) {
-            split(temp, size);
-            return temp;
-        }
-        temp = temp->next;
-    }
-    
-    // not enough space -> sbrk
-// should be meta_data* ?????idk
-    void* brk = sbrk(sizeof(meta_data) + (2 * size)); // idk just be safe?
+meta_data* new_block(size_t size) {
+    void* brk = sbrk(sizeof(meta_data) + (size));
     if (brk == (void*) -1) return NULL; // not enough memory :(((
     meta_data* new_md = (meta_data*) brk;
-    new_md->size = 2 * size;
+    new_md->size = size;
     new_md->is_allocated = 0;
     new_md->next = NULL;
     meta_data* new_md_prev = get_end();
+    if (!head) {
+        head = new_md;
+        new_md->prev = NULL;
+        return new_md;
+    }
     new_md_prev->next = new_md;
     new_md->prev = new_md_prev;
-    
-    return meta_data_from_size(size);
+    return new_md;
+}
+
+// splits a block that has been partially allocd
+void* split(meta_data* addr, size_t size_allocd) {
+    meta_data* mid = addr + sizeof(meta_data) + size_allocd;
+
+    mid->next = addr->next;
+    mid->prev = addr->prev;
+    if (addr->next) {
+        addr->next->prev = mid;
+        if (!addr->prev) head = mid;
+    }
+    if (addr->prev) {
+        addr->prev->next = mid;
+    } else {
+        head = mid;
+    }
+
+    mid->size = addr->size - size_allocd;
+    addr->size = size_allocd;
+
+    mid->is_allocated = 0;
+    return mid;
+}
+
+// returns pointer to first meta_data with size >= requested
+meta_data* meta_data_from_size(size_t size) {
+    meta_data* temp = head;
+    while(temp) { //go through all meta_data lookign for one that is free
+        if (!temp->is_allocated && temp->size >= size) { // break when found md with good size
+            break;
+        }
+        temp = temp->next;
+    }
+    if (!temp) temp = new_block(size); // if there are no md's of good size
+    meta_data* ret = NULL;
+    if (temp->size > size + sizeof(meta_data)) { // split larger blocks
+        ret = split(temp,size); // 'ok' represents freed part of temp
+
+    } else { // return equal blocks
+        if (temp->prev) {
+            temp->prev->next = temp->next;
+        }
+
+        if (temp->next) {
+            temp->next->prev = temp->prev;
+        }
+        temp->is_allocated = 1;
+        return temp;
+    }
+    temp->is_allocated = 1;
+    return temp;
 }
 
 /**
@@ -202,7 +230,7 @@ void free(void *ptr) {
     // implement free!
     meta_data* md = meta_data_from_ptr(ptr); // check return type
     if (!md) return;
-    
+
     md->is_allocated = 0;
     coalesce(md);
 }
@@ -264,11 +292,14 @@ void *realloc(void *ptr, size_t size) {
     meta_data* md = (meta_data*) ptr;
     meta_data* temp = malloc(size);
 
-    if (size > md->size) {
+    if (size >= md->size) {
         memcpy(temp, md, md->size);
+        free(ptr);
         return temp;
     }
 
     memcpy(temp, md, size);
+    free(ptr);
     return temp;
 }
+
