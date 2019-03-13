@@ -87,7 +87,6 @@ int main(){
       if(nread > 0)
       {
           printf("Sending \n");
-          printf("Message: \n%s", buff);
           write(newSocket, buff, nread);
       }
 
