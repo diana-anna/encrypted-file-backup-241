@@ -37,9 +37,21 @@ void coalesce(meta_data* addr) { // ASK ABOUT SIZE CHANGES
 
         // size of 1 and 2 + size of 2's meta_data
         addr->size += neighbor->size + sizeof(neighbor);
-        meta_data* old_neighbor_next = neighbor->next;
+        if (neighbor->prev) {
+            addr->prev = neighbor->prev;
+        } else {
+            addr->prev = NULL;
+            head = addr;
+        }
+
+        if (neighbor->next) {
+            addr->next = neighbor->next;
+        } else {
+            addr->next = NULL;
+        }
+    /*    meta_data* old_neighbor_next = neighbor->next;
         addr->next = old_neighbor_next;
-        old_neighbor_next->prev = addr;
+        old_neighbor_next->prev = addr;*/
     }
     if (!addr->prev->is_allocated) { // merge current and prev
         meta_data* neighbor = addr->prev;
