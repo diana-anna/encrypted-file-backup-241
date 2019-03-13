@@ -15,6 +15,7 @@
 int main(){
   int welcomeSocket, newSocket;
   char buffer[1024];
+  char* serverIP;
   struct sockaddr_in serverAddr;
   struct sockaddr_storage serverStorage;
   struct ifaddrs *addrs = malloc(sizeof(struct ifaddrs));
@@ -34,6 +35,10 @@ int main(){
       {
           struct sockaddr_in *pAddr = (struct sockaddr_in *)tmp->ifa_addr;
           //printf("%s: %s\n", tmp->ifa_name, inet_ntoa(pAddr->sin_addr));
+          if (strcmp(tmp->ifa_name, "eth0") == 0){
+            serverIP = inet_ntoa(pAddr->sin_addr);
+            printf("The server's IP address is %s\n", serverIP);
+          }
       }
 
       tmp = tmp->ifa_next;
@@ -47,7 +52,7 @@ int main(){
   /* Set port number, using htons function to use proper byte order */
   serverAddr.sin_port = htons(7891);
   /* Set IP address to localhost */
-  serverAddr.sin_addr.s_addr = inet_addr("172.22.146.60");
+  serverAddr.sin_addr.s_addr = inet_addr(serverIP);
   /* Set all bits of the padding field to 0 */
   memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);  
 

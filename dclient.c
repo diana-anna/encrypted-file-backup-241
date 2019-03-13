@@ -12,7 +12,13 @@
 
 extern int errno;
 
-int main(){
+int main(int argc, char** argv){
+
+  if (argc != 2){
+    printf("Usage!\n");
+    exit(1);
+  }
+
   int bytesReceived = 0;
   int clientSocket;
   char recvBuff[256];
@@ -30,7 +36,7 @@ int main(){
   /* Set port number, using htons function to use proper byte order */
   serverAddr.sin_port = htons(7891);
   /* Set IP address to localhost */
-  serverAddr.sin_addr.s_addr = inet_addr("172.22.146.60");
+  serverAddr.sin_addr.s_addr = inet_addr(argv[1]);
   /* Set all bits of the padding field to 0 */
   memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);  
 
