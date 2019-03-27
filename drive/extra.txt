@@ -1,0 +1,65 @@
+
+  //potential code for sending a file
+  while(1)
+    {
+        newSocket = accept(welcomeSocket, (struct sockaddr*)NULL ,NULL);
+
+        /* Open the file that we wish to transfer */
+        FILE *fp = fopen("sample_file.txt","rb");
+        if(fp==NULL)
+        {
+            printf("File opern error");
+            return 1;   
+        }   
+
+        /* Read data from file and send it */
+        while(1)
+        {
+            /* First read file in chunks of 256 bytes */
+            unsigned char buff[256]={0};
+            int nread = fread(buff,1,256,fp);
+            printf("Bytes read %d \n", nread);        
+
+            /* If read was success, send data. */
+            if(nread > 0)
+            {
+                printf("Sending \n");
+                printf("Message: \n%s", buff);
+                write(newSocket, buff, nread);
+            }
+
+            /*
+             * There is something tricky going on with read .. 
+             * Either there was error, or we reached end of file.
+             */
+            if (nread < 256)
+            {
+                if (feof(fp))
+                    printf("End of file\n");
+                if (ferror(fp))
+                    printf("Error reading\n");
+                break;
+            }
+
+
+        }
+
+        close(newSocket);
+        sleep(1);
+    }
+
+    //working server code to send Message
+      //*---- Accept call creates a new socket for the incoming connection ----
+  addr_size = sizeof serverStorage;
+  newSocket = accept(welcomeSocket, (struct sockaddr *) &serverStorage, &addr_size);
+
+  //*---- Send message to the socket of the incoming connection ----/
+  strcpy(buffer,"Hello World\n");
+  send(newSocket,buffer,13,0);
+
+  //working client code
+    //---- Read the message from the server into the buffer ----
+  recv(clientSocket, buffer, 1024, 0);
+
+  //---- Print the received message ----
+  printf("Data received: %s",buffer);
