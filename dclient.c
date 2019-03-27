@@ -10,18 +10,20 @@
 #include <errno.h>
 #include <stdlib.h>
 
+#define CAPACITY 256
+
 extern int errno;
 
 int main(int argc, char** argv){
 
-  if (argc != 2){
-    printf("Usage!\n");
+  if (argc != 3){
+    printf("Usage: dclient <IP address> <file name>\n");
     exit(1);
   }
 
   int bytesReceived = 0;
   int clientSocket;
-  char recvBuff[256];
+  char recvBuff[CAPACITY];
   memset(recvBuff, '0', sizeof(recvBuff));
   struct sockaddr_in serverAddr;
   socklen_t addr_size;
@@ -49,15 +51,15 @@ int main(int argc, char** argv){
 
   // Create file where data will be stored 
   FILE *fp;
-  fp = fopen("client_sample.txt", "ab"); 
-  if(NULL == fp)
-  {
-      printf("Error opening file");
-      return 1;
+  char* file_name = argv[2];
+  fp = fopen(file_name, "ab"); 
+  if(fp == NULL){
+      perror("Error opening file");
+      exit(1);
   }
 
   // Receive data in chunks of 256 bytes 
-  while((bytesReceived = read(clientSocket, recvBuff, 256)) > 0)
+  while((bytesReceived = read(clientSocket, recvBuff, CAPACITY)) > 0)
   {
       printf("Bytes received %d\n",bytesReceived);    
       fwrite(recvBuff, 1,bytesReceived,fp);
