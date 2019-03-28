@@ -17,3 +17,13 @@
 #include "filter.h"
 
 // Good luck!
+MODULE_LICENSE("GPL");
+
+int init_module() {
+    printk("hello world\n");
+    return 0;
+}
+
+void cleanup_module() {
+
+}
