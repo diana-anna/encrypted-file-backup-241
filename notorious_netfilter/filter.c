@@ -21,10 +21,15 @@ MODULE_LICENSE("GPL");
 
 static struct nf_hook_ops netfilter_ops;
 
+static unsigned int main_hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
+    struct iphdr *ip_header = (struct iphdr *)skb_network_header(skb);
+    unsigned int src_ip = (unsigned int)ip_header->saddr;
+}
+
 int init_module() {
     printk("hello world\n");
 
-//    netfilter_ops.hook = main_hook;
+    netfilter_ops.hook = main_hook;
     netfilter_ops.pf = PF_INET;
     netfilter_ops.hooknum = 0;
     netfilter_ops.priority = NF_IP_PRI_FIRST;
