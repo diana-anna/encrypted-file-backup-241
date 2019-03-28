@@ -19,11 +19,20 @@
 // Good luck!
 MODULE_LICENSE("GPL");
 
+static struct nf_hook_ops netfilter_ops;
+
 int init_module() {
     printk("hello world\n");
+
+//    netfilter_ops.hook = main_hook;
+    netfilter_ops.pf = PF_INET;
+    netfilter_ops.hooknum = 0;
+    netfilter_ops.priority = NF_IP_PRI_FIRST;
+    nf_register_net_hook(&init_net, &netfilter_ops);
+
     return 0;
 }
 
 void cleanup_module() {
-
+    nf_unregister_net_hook(&init_net, &netfilter_ops);
 }
