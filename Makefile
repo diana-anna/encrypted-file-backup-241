@@ -5,8 +5,9 @@ CFLAGS  = -Wall
 # the build target executable:
 SERVER = dserver
 CLIENT = dclient
+DTCP = d_tcp
 
-all: $(SERVER) $(CLIENT)
+d_all: $(DTCP)
 server: $(SERVER)
 client: $(CLIENT)
 
@@ -15,3 +16,6 @@ $(SERVER): $(SERVER).c
 
 $(CLIENT): $(CLIENT).c
 	$(CC) $(CFLAGS) -o $(CLIENT) $(CLIENT).c
+
+$(DTCP): $(DTCP).c
+	$(CC) $(CFLAGS) -o $(DTCP) $(DTCP).c
