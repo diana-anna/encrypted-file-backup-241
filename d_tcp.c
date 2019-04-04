@@ -13,6 +13,7 @@
 
 int check_for_file(char* file_name){
     //chdir("../drive");
+    printf("Checking for file %s\n", file_name);
     FILE *fp = fopen(file_name, "r");
     if (fp) {
         return 1;
