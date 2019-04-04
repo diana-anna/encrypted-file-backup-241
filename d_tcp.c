@@ -70,6 +70,8 @@ int receive_file(int Socket, char* file_name){
     char cmdBuff[CAPACITY];
     memset(recvBuff, 0, CAPACITY);
     memset(cmdBuff, 0, CAPACITY);
+    char new_filename[CAPACITY];
+    memset(new_filename, 0, CAPACITY);
 
     //check if file exists
     sprintf(cmdBuff, "doesExist ");
@@ -82,7 +84,9 @@ int receive_file(int Socket, char* file_name){
 
         // Create file where data will be stored 
         FILE *fp;
-        fp = fopen(file_name, "ab"); 
+        sprintf(new_filename, "%s", file_name);
+        new_filename[0] = 'd';
+        fp = fopen(new_filename, "ab"); 
         if(fp == NULL){
             perror("Error opening file");
             exit(1);
@@ -148,6 +152,7 @@ int client(char* ip_addr){
     }
     mode = strtok(input, " ");
     file_name = strtok(NULL, " ");
+    file_name[strlen(file_name)-1] = 0; //get rid of new line char
     if (strcmp(mode, "receive") == 0){
         receive_file(clientSocket, file_name);
     }
@@ -248,6 +253,7 @@ int server(){
     }
     char* mode = strtok(action, " ");
     char* file_name = strtok(NULL, " ");
+    printf("Command entered: %s %s\n", mode, file_name);
 
     if (strcmp(mode, "doesExist") == 0){
         //we want to check if a file exists on the server
