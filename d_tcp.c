@@ -12,7 +12,6 @@
 #define CAPACITY 256
 
 int check_for_file(char* file_name){
-    //chdir("../drive");
     printf("Checking for file %s\n", file_name);
     FILE *fp = fopen(file_name, "r");
     if (fp) {
@@ -23,7 +22,27 @@ int check_for_file(char* file_name){
 }
 
 int send_file(int Socket, char* file_name){
-    /* Open the file that we wish to transfer */
+    char msgBuff[CAPACITY];
+    memset(msgBuff, 0, CAPACITY);
+
+    if (file_name == NULL){
+        printf("No filename found!\n");
+        exit(1);
+    }
+    int file_exists = check_for_file(file_name);
+
+    if (!file_exists){
+        msgBuff[0] = '0';
+        msgBuff[1] = 0;
+        send(Socket, msgBuff, CAPACITY, 0);
+        printf("File doesn't exist!\n");
+        exit(1);
+    } else{
+        msgBuff[0] = '1';
+        msgBuff[1] = 0;
+        send(Socket, msgBuff, CAPACITY, 0);
+    }
+
     FILE *fp = fopen(file_name,"rb");
     if(fp==NULL)
     {
@@ -31,27 +50,22 @@ int send_file(int Socket, char* file_name){
         exit(1);   
     }   
 
-    /* Read data from file and send it */
+    // Read data from file and send it
     while(1)
     {
-        /* First read file in chunks of 256 bytes */
+        // First read file in chunks of 256 bytes
         unsigned char buff[CAPACITY]={0};
         int nread = fread(buff,1,CAPACITY,fp);
         printf("Bytes read %d \n", nread);        
 
-        /* If read was success, send data. */
-        if(nread > 0)
-        {
+        // If read was success, send data.
+        if(nread > 0){
             printf("Sending \n");
             write(Socket, buff, nread);
         }
 
-        /*
-        * There is something tricky going on with read .. 
-        * Either there was error, or we reached end of file.
-        */
-        if (nread < 256)
-        {
+        // There is something tricky going on with read, either there was error, or we reached end of file.
+        if (nread < 256){
             if (feof(fp))
                 printf("End of file\n");
             if (ferror(fp))
@@ -61,32 +75,25 @@ int send_file(int Socket, char* file_name){
 
 
     }
+    fclose(fp);
     return 0;
 }
 
 int receive_file(int Socket, char* file_name){
     int bytesReceived = 0;
     char recvBuff[CAPACITY];
-    char cmdBuff[CAPACITY];
+    char msgBuff[CAPACITY];
     memset(recvBuff, 0, CAPACITY);
-    memset(cmdBuff, 0, CAPACITY);
-    char new_filename[CAPACITY];
-    memset(new_filename, 0, CAPACITY);
+    memset(msgBuff, 0, CAPACITY);
 
-    //check if file exists
-    sprintf(cmdBuff, "doesExist ");
-    strcat(cmdBuff, file_name);
-    send(Socket, cmdBuff, CAPACITY, 0);
-    recv(Socket, cmdBuff, CAPACITY, 0);
-    int exists_file = atoi(cmdBuff);
+    //wait for response -- does file exist?
+    recv(Socket, msgBuff, CAPACITY, 0);
+    int exists_file = atoi(msgBuff);
 
     if (exists_file){
-
         // Create file where data will be stored 
         FILE *fp;
-        sprintf(new_filename, "%s", file_name);
-        new_filename[0] = 'd';
-        fp = fopen(new_filename, "ab"); 
+        fp = fopen(file_name, "ab"); 
         if(fp == NULL){
             perror("Error opening file");
             exit(1);
@@ -96,23 +103,34 @@ int receive_file(int Socket, char* file_name){
         while((bytesReceived = read(Socket, recvBuff, CAPACITY)) > 0){
             printf("Bytes received %d\n",bytesReceived);    
             fwrite(recvBuff, 1, bytesReceived, fp);
+            if (bytesReceived < CAPACITY){
+                if (feof(fp)){
+                    printf("End of file\n");
+                    fclose(fp);
+                }
+                if (ferror(fp)){
+                    printf("Error reading\n");
+                }
+                break;
+            }
         }
 
         if(bytesReceived < 0){
             perror("read error");
             exit(1);
         }
-    } else{
+    } 
+    else{
         printf("File does not exist!\n");
         exit(1);
     }
 
 
+
     return 0;
 }
 
-int client(char* ip_addr){
-
+int client(char* ip_addr, char* drive_dir){
     int bytesReceived = 0;
     int clientSocket;
     char recvBuff[CAPACITY];
@@ -120,83 +138,68 @@ int client(char* ip_addr){
     struct sockaddr_in serverAddr;
     socklen_t addr_size;
     char* input = NULL;
+    size_t line_size;
     char* mode;
     char* file_name;
 
-    /*---- Create the socket. The three arguments are: ----*/
-    /* 1) Internet domain 2) Stream socket 3) Default protocol (TCP in this case) */
+    if (drive_dir != NULL){
+        chdir(drive_dir);
+    }
+
     clientSocket = socket(PF_INET, SOCK_STREAM, 0);
 
-    /*---- Configure settings of the server address struct ----*/
-    /* Address family = Internet */
     serverAddr.sin_family = AF_INET;
-    /* Set port number, using htons function to use proper byte order */
     serverAddr.sin_port = htons(7891);
-    /* Set IP address to localhost */
     serverAddr.sin_addr.s_addr = inet_addr(ip_addr);
-    /* Set all bits of the padding field to 0 */
+    // Set all bits of the padding field to 0
     memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);  
 
-    /*---- Connect the socket to the server using the address struct ----*/
     addr_size = sizeof serverAddr;
     if((connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size)) == -1){
         perror("Connection Failed!");
         exit(1);
     }
 
-    printf("Please enter a command.\n");
-    size_t line_size;
-    if (getline(&input, &line_size, stdin) == -1){
-        perror("getline failed");
-        exit(1);
-    }
-    mode = strtok(input, " ");
-    file_name = strtok(NULL, " ");
-    file_name[strlen(file_name)-1] = 0; //get rid of new line char
-    if (strcmp(mode, "receive") == 0){
-        receive_file(clientSocket, file_name);
-    }
+    while(1){
 
-
-    /*
-    // Create file where data will be stored 
-    FILE *fp;
-    fp = fopen(file_name, "ab"); 
-    if(fp == NULL){
-        perror("Error opening file");
-        exit(1);
-    }
-
-    // Receive data in chunks of 256 bytes 
-    while((bytesReceived = read(clientSocket, recvBuff, CAPACITY)) > 0)
-    {
-        printf("Bytes received %d\n",bytesReceived);    
-        fwrite(recvBuff, 1,bytesReceived,fp);
+        printf("Please enter a command.\n");
+        if (getline(&input, &line_size, stdin) == -1){
+            perror("getline failed");
+            exit(1);
+        }
+        input[strlen(input)-1] = 0; //get rid of new line char
+        send(clientSocket, input, CAPACITY, 0);
+        mode = strtok(input, " ");
+        file_name = strtok(NULL, " ");
+        if (strcmp(mode, "receive") == 0){
+            receive_file(clientSocket, file_name);
+        }
+        else if (strcmp(mode, "send") == 0){
+            send_file(clientSocket, file_name);
+        } 
+        else if (strcmp(mode, "close") == 0){
+            break;
+        }
     }
 
-    if(bytesReceived < 0)
-    {
-        //fprintf(stderr, " Read Error: errno %d \n", errno);
-        perror("read error\n");
-    }
-    */
-
+    close(clientSocket);
 
     return 0;
 }
 
-int server(){
+int server(char* drive_dir){
     int welcomeSocket, newSocket;
-    //char buffer[1024];
     char* serverIP = NULL;
     struct sockaddr_in serverAddr;
-    //struct sockaddr_storage serverStorage;
     struct ifaddrs *addrs = malloc(sizeof(struct ifaddrs));
-    //socklen_t addr_size;
     char action[1024];
 
-    /*---- Create the socket. The three arguments are: ----*/
-    /* 1) Internet domain 2) Stream socket 3) Default protocol (TCP in this case) */
+    if (drive_dir != NULL){
+        chdir(drive_dir);
+    }
+
+    // Create the socket. The three arguments are:
+    // 1) Internet domain 2) Stream socket 3) Default protocol (TCP in this case)
     welcomeSocket = socket(PF_INET, SOCK_STREAM, 0);
 
     //get this machine's IP address
@@ -224,20 +227,16 @@ int server(){
         exit(1);
     }
 
-    /*---- Configure settings of the server address struct ----*/
-    /* Address family = Internet */
+    // Configure settings of the server address struct
     serverAddr.sin_family = AF_INET;
-    /* Set port number, using htons function to use proper byte order */
     serverAddr.sin_port = htons(7891);
-    /* Set IP address to localhost */
     serverAddr.sin_addr.s_addr = inet_addr(serverIP);
-    /* Set all bits of the padding field to 0 */
+    // Set all bits of the padding field to 0
     memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);  
 
-    /*---- Bind the address struct to the socket ----*/
     bind(welcomeSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr));
 
-    //*---- Listen on the socket, with 5 max connection requests queued ----/
+    // Listen on the socket, with 5 max connection requests queued
     if(listen(welcomeSocket,5)==0)
     printf("Listening\n");
     else
@@ -247,34 +246,27 @@ int server(){
 
     newSocket = accept(welcomeSocket, (struct sockaddr*)NULL ,NULL);
 
-    if (recv(newSocket, action, 1024, 0) == -1){
-        perror("recv failed");
-        exit(1);
-    }
-    char* mode = strtok(action, " ");
-    char* file_name = strtok(NULL, " ");
-    printf("Command entered: %s %s\n", mode, file_name);
+    while(1){
 
-    if (strcmp(mode, "doesExist") == 0){
-        //we want to check if a file exists on the server
-        if (file_name == NULL){
-            printf("No filename found!\n");
+        if (recv(newSocket, action, 1024, 0) == -1){
+            perror("recv failed");
             exit(1);
         }
-        int file_exists = check_for_file(file_name);
-
-        if (!file_exists){
-            action[0] = '0';
-            action[1] = 0;
-            send(newSocket, action, CAPACITY, 0);
-            printf("File doesn't exist!\n");
-            exit(1);
-        } else{
-            action[0] = '1';
-            action[1] = 0;
-            send(newSocket, action, CAPACITY, 0);
+        char* mode = strtok(action, " ");
+        char* file_name = strtok(NULL, " ");
+        printf("Command entered: %s %s\n", mode, file_name);
+        if (strcmp(mode, "receive") == 0){
+            //we need to send file to client
             send_file(newSocket, file_name);
         }
+        else if (strcmp(mode, "send") == 0){
+            //we need to receive the client's file
+            receive_file(newSocket, file_name);
+        }
+        else if (strcmp(mode, "close") == 0){
+            break;
+        }
+
     }
 
     close(newSocket);
@@ -292,13 +284,26 @@ int main(int argc, char **argv){
 
     char* mode = argv[1];
     if (strcmp(mode, "server") == 0){
-        server();
-    } else if (strcmp(mode, "client") == 0){
-        if (argc != 3){
-            printf("Usage: program client IP_addrs\n");
-            exit(1);
+        if (argc == 2){
+            server(NULL);
+        } else if (argc == 3){
+            server(argv[2]);
         }
-        client(argv[2]);
+        else{
+            printf("Usage: program server optional_path_to_drive\n");
+        }
+    } 
+    else if (strcmp(mode, "client") == 0){
+        if (argc < 3){
+            printf("Usage: program client IP_addrs optional_path_to_drive\n");
+            exit(1);
+        } else if (argc == 3){
+            client(argv[2], NULL);
+        } else if (argc == 4){
+            client(argv[2], argv[3]);
+        } else{
+            printf("Usage: program client IP_addrs ");
+        }
     } else{
         printf("%s", usage_msg);
         exit(1);
