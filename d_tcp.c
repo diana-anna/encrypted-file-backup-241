@@ -22,15 +22,17 @@ int check_for_file(char* file_name){
 }
 
 int send_file(int Socket, char* file_name){
-    char msgBuff[CAPACITY];
+
+    char* msgBuff = malloc(CAPACITY);
     memset(msgBuff, 0, CAPACITY);
 
     if (file_name == NULL){
         printf("No filename found!\n");
         exit(1);
     }
-    int file_exists = check_for_file(file_name);
 
+    //check if the file exists
+    int file_exists = check_for_file(file_name);
     if (!file_exists){
         msgBuff[0] = '0';
         msgBuff[1] = 0;
@@ -43,33 +45,53 @@ int send_file(int Socket, char* file_name){
         send(Socket, msgBuff, CAPACITY, 0);
     }
 
+    //open the file
     FILE *fp = fopen(file_name,"rb");
     if(fp==NULL)
     {
         perror("File open error");
         exit(1);   
-    }   
+    }
+    //read in file size
+    fseek(fp, 0L, SEEK_END);
+    long file_size = ftell(fp);
+    rewind(fp);
+    //send file size across the socket
+    const int necessary_buf_size = snprintf(NULL, 0, "%ld", file_size);
+    if (necessary_buf_size >= CAPACITY){
+        msgBuff = realloc(msgBuff, necessary_buf_size + 1);
+    }
+    int used_buf_bytes = snprintf(msgBuff, necessary_buf_size + 1, "%ld", file_size);
+    if (used_buf_bytes != necessary_buf_size){
+        perror("Something went wrong with sending the size of the file!");
+        exit(1);
+    }
+    write(Socket, msgBuff, used_buf_bytes+1);
+    printf("%s size: %ld bytes\n", file_name, file_size);
+
 
     // Read data from file and send it
+    long byte_count = 0;
     while(1)
     {
-        // First read file in chunks of 256 bytes
+        // First read file in chunks of CAPACITY bytes
         unsigned char buff[CAPACITY]={0};
-        int nread = fread(buff,1,CAPACITY,fp);
-        printf("Bytes read %d \n", nread);        
+        int nread = fread(buff,1,CAPACITY,fp);       
 
         // If read was success, send data.
         if(nread > 0){
-            printf("Sending \n");
-            write(Socket, buff, nread);
+            //printf("Sending \n");
+            ssize_t bytes_written = write(Socket, buff, nread);
+            byte_count += bytes_written;
         }
 
         // There is something tricky going on with read, either there was error, or we reached end of file.
-        if (nread < 256){
-            if (feof(fp))
-                printf("End of file\n");
-            if (ferror(fp))
-                printf("Error reading\n");
+        if (feof(fp)){
+            printf("End of file\n");
+            break;
+        }
+        if (ferror(fp)){
+            printf("Error reading\n");
             break;
         }
 
@@ -98,20 +120,27 @@ int receive_file(int Socket, char* file_name){
             perror("Error opening file");
             exit(1);
         }
+        //receive size of file
+        recv(Socket, msgBuff, CAPACITY, 0);
+        long file_size = atoi(msgBuff);
+        long byte_count = 0;
+        printf("%s size: %ld bytes\n", file_name, file_size);
 
         // Receive data in chunks of CAPACITY bytes 
-        while((bytesReceived = read(Socket, recvBuff, CAPACITY)) > 0){
-            printf("Bytes received %d\n",bytesReceived);    
-            fwrite(recvBuff, 1, bytesReceived, fp);
+        while((bytesReceived = read(Socket, recvBuff, CAPACITY)) >= 0){
             if (bytesReceived < CAPACITY){
-                if (feof(fp)){
-                    printf("End of file\n");
-                    fclose(fp);
-                }
-                if (ferror(fp)){
-                    printf("Error reading\n");
-                }
+                printf("Bytes received %d\n",bytesReceived);
+            }
+            byte_count += bytesReceived;  
+            fwrite(recvBuff, 1, bytesReceived, fp);
+            if (byte_count == file_size){
+                printf("End of file! Total bytes received: %ld bytes\n", byte_count);
+                fclose(fp);
                 break;
+            }
+            else if(byte_count > file_size){
+                perror("Tried to write more bytes than the original file!");
+                exit(1);
             }
         }
 
