@@ -8,6 +8,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <stdint.h>
+#include "aes.h"
 
 #define CAPACITY 256
 
@@ -76,7 +78,22 @@ int send_file(int Socket, char* file_name){
     {
         // First read file in chunks of CAPACITY bytes
         unsigned char buff[CAPACITY]={0};
-        int nread = fread(buff,1,CAPACITY,fp);       
+        int nread = fread(buff,1,CAPACITY,fp);    
+        
+        // ENCRYPTION
+        // taken from example (credited in aes.h, aes.c, aes_test.c)
+        WORD key_schedule[60];
+        BYTE enc_buf[256]; // holds encrypted buff
+        BYTE iv[1][16] = {
+        {0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7,0xf8,0xf9,0xfa,0xfb,0xfc,0xfd,0xfe,0xff},
+       };
+        BYTE key[1][32] = {
+        {0x60,0x3d,0xeb,0x10,0x15,0xca,0x71,0xbe,0x2b,0x73,0xae,0xf0,0x85,0x7d,0x77,0x81,0x1f,0x35,0x2c,0x07,0x3b,0x61,0x08,0xd7,0x2d,0x98,0x10,0xa3,0x09,0x14,0xdf,0xf4}
+       };
+       int pass = 1;
+
+       aes_key_setup(key[0], key_schedule, 256);
+       aes_encrypt_ctr(buff, CAPACITY, enc_buf, key_schedule, 256, iv[0]);
 
         // If read was success, send data.
         if(nread > 0){
@@ -128,6 +145,21 @@ int receive_file(int Socket, char* file_name){
 
         // Receive data in chunks of CAPACITY bytes 
         while((bytesReceived = read(Socket, recvBuff, CAPACITY)) >= 0){
+            
+            // DECRYPTION
+            WORD key_schedule[60];
+            BYTE dec_buf[256]; // holds decrypted buff
+            BYTE iv[1][16] = {
+            {0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7,0xf8,0xf9,0xfa,0xfb,0xfc,0xfd,0xfe,0xff},
+           };
+            BYTE key[1][32] = {
+            {0x60,0x3d,0xeb,0x10,0x15,0xca,0x71,0xbe,0x2b,0x73,0xae,0xf0,0x85,0x7d,0x77,0x81,0x1f,0x35,0x2c,0x07,0x3b,0x61,0x08,0xd7,0x2d,0x98,0x10,0xa3,0x09,0x14,0xdf,0xf4}
+           };
+           int pass = 1;
+
+           aes_key_setup(key[0], key_schedule, 256);
+           aes_decrypt_ctr(recvBuff, CAPACITY, dec_buf, key_schedule, 256, iv[0]);
+            
             if (bytesReceived < CAPACITY){
                 printf("Bytes received %d\n",bytesReceived);
             }
