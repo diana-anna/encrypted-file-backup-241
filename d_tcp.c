@@ -98,7 +98,7 @@ int send_file(int Socket, char* file_name){
         // If read was success, send data.
         if(nread > 0){
             //printf("Sending \n");
-            ssize_t bytes_written = write(Socket, buff, nread);
+            ssize_t bytes_written = write(Socket, enc_buf, nread);
             byte_count += bytes_written;
         }
 
@@ -164,7 +164,7 @@ int receive_file(int Socket, char* file_name){
                 printf("Bytes received %d\n",bytesReceived);
             }
             byte_count += bytesReceived;  
-            fwrite(recvBuff, 1, bytesReceived, fp);
+            fwrite(dec_buf, 1, bytesReceived, fp);
             if (byte_count == file_size){
                 printf("End of file! Total bytes received: %ld bytes\n", byte_count);
                 fclose(fp);
